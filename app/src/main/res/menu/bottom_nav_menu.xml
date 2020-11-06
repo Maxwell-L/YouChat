@@ -13,7 +13,7 @@
         android:title="@string/title_friend" />
 
     <item
-        android:id="@+id/navigation_personal_center"
+        android:id="@+id/navigation_me"
         android:icon="@drawable/ic_me_24dp"
         android:title="@string/title_me" />
 
