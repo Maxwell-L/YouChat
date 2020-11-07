@@ -12,10 +12,10 @@
         tools:layout="@layout/fragment_home" />
 
     <fragment
-        android:id="@+id/navigation_friends"
-        android:name="com.maxwell.youchat.ui.friends.FriendsFragment"
+        android:id="@+id/navigation_friend"
+        android:name="com.maxwell.youchat.ui.friend.FriendFragment"
         android:label="@string/title_friend"
-        tools:layout="@layout/fragment_friends" />
+        tools:layout="@layout/fragment_friend" />
 
     <fragment
         android:id="@+id/navigation_me"
