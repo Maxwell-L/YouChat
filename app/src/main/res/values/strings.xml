@@ -3,4 +3,5 @@
     <string name="title_home">U信</string>
     <string name="title_friend">好友</string>
     <string name="title_me">我</string>
+    <string name="button">发消息</string>
 </resources>
