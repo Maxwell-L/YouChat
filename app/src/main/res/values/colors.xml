@@ -11,4 +11,5 @@
     <color name="white">#FFFFFFFF</color>
     <color name="white_smoke">#FFF5F5F5</color>
     <color name="ghost_white">#FFF8F8FF</color>
+    <color name="lawn_green">#FF7CFC00</color>
 </resources>
