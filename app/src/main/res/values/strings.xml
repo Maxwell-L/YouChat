@@ -4,4 +4,5 @@
     <string name="title_friend">好友</string>
     <string name="title_me">我</string>
     <string name="button">发消息</string>
+    <string name="send_button">发送</string>
 </resources>
