@@ -1,12 +1,9 @@
 package com.maxwell.youchat.activity;
 
 import android.os.Bundle;
-import android.view.KeyEvent;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -14,26 +11,25 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.maxwell.youchat.R;
 import com.maxwell.youchat.adapter.MessageAdapter;
-import com.maxwell.youchat.viewmodel.SendMessageActivityViewModel;
+import com.maxwell.youchat.viewmodel.ChatActivityViewModel;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class SendMessageActivity extends AppCompatActivity {
+public class ChatActivity extends AppCompatActivity {
 
     private EditText editText;
     private Button button;
     private ListView listView;
-    private SendMessageActivityViewModel viewModel;
+    private ChatActivityViewModel viewModel;
     private List<HashMap<String, Object>> itemList;
     private MessageAdapter messageAdapter;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.send_message);
-        viewModel = new ViewModelProvider(this).get(SendMessageActivityViewModel.class);
+        setContentView(R.layout.activity_chat);
+        viewModel = new ViewModelProvider(this).get(ChatActivityViewModel.class);
         editText = findViewById(R.id.edit_text);
         button = findViewById(R.id.send_button);
         listView = findViewById(R.id.message_list);

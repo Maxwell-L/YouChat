@@ -7,10 +7,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class SendMessageActivityViewModel extends ViewModel {
+public class ChatActivityViewModel extends ViewModel {
     private MutableLiveData<List<HashMap<String, Object>>> itemList;
 
-    public SendMessageActivityViewModel() {
+    public ChatActivityViewModel() {
         if(itemList == null) {
             this.itemList = new MutableLiveData<>();
             itemList.setValue(new ArrayList<>());

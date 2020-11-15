@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".activity.SendMessageActivity">
+    tools:context=".activity.ChatActivity">
 
     <ListView
         android:id="@+id/message_list"
