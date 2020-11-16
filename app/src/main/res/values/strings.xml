@@ -5,4 +5,7 @@
     <string name="title_me">我</string>
     <string name="button">发消息</string>
     <string name="send_button">发送</string>
+    <string name="username">请输入用户名</string>
+    <string name="password">请输入密码</string>
+    <string name="login_in">登录</string>
 </resources>

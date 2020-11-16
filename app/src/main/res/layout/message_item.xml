@@ -13,7 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="80dp"
-        android:layout_marginRight="8dp"
+        android:layout_marginRight="5dp"
         android:padding="10dp"
         app:bl_arrowDirection="right"
         app:bl_arrowHeight="8dp"

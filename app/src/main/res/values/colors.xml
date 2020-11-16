@@ -13,4 +13,5 @@
     <color name="ghost_white">#FFF8F8FF</color>
     <color name="lawn_green">#FF7CFC00</color>
     <color name="lime">#FF00FF00</color>
+    <color name="light_grey">#FFD3D3D3</color>
 </resources>

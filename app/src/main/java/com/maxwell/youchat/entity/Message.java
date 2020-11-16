@@ -1,7 +1,5 @@
 package com.maxwell.youchat.entity;
 
-import android.support.v4.os.IResultReceiver;
-
 import androidx.annotation.NonNull;
 
 import org.greenrobot.greendao.annotation.Entity;
@@ -9,7 +7,7 @@ import org.greenrobot.greendao.annotation.Id;
 
 import org.greenrobot.greendao.annotation.Generated;
 
-@Entity
+@Entity(nameInDb = "t_message")
 public class Message {
     @Id
     private Long id;
