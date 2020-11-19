@@ -20,18 +20,22 @@ public class Message {
     @Index
     private Long receiveUserId;
 
+    private Long groupId;
+
     @NonNull
     private Long createTime;
 
     @NonNull
     private String content;
 
-    @Generated(hash = 1234143995)
+
+    @Generated(hash = 75079361)
     public Message(Long id, @NonNull Long sendUserId, @NonNull Long receiveUserId,
-            @NonNull Long createTime, @NonNull String content) {
+            Long groupId, @NonNull Long createTime, @NonNull String content) {
         this.id = id;
         this.sendUserId = sendUserId;
         this.receiveUserId = receiveUserId;
+        this.groupId = groupId;
         this.createTime = createTime;
         this.content = content;
     }
@@ -52,6 +56,10 @@ public class Message {
         return receiveUserId;
     }
 
+    public Long getGroupId() {
+        return groupId;
+    }
+
     public Long getCreateTime() {
         return createTime;
     }
@@ -70,6 +78,10 @@ public class Message {
 
     public void setReceiveUserId(Long receiveUserId) {
         this.receiveUserId = receiveUserId;
+    }
+
+    public void setGroupId(Long groupId) {
+        this.groupId = groupId;
     }
 
     public void setCreateTime(Long createTime) {

@@ -60,9 +60,10 @@ public class ChatActivity extends AppCompatActivity {
             } else {
                 editText.setHint("");
                 // TODO
-                // 1. 将消息保存到数据库/发送到对方
-                Message message = new Message(null, 0L, 1L, new Date().getTime(), text);
+                // 1. 将消息保存到数据库
+                Message message = new Message(null, 0L, 1L, null, new Date().getTime(), text);
                 messageDao.insert(message);
+                // 把消息发送给对方/服务器
                 // 2. 添加到 ListView 显示
                 HashMap<String, Object> newItem = new HashMap<>();
                 newItem.put("content", text);
