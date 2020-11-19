@@ -6,6 +6,7 @@ import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Id;
 
 import org.greenrobot.greendao.annotation.Generated;
+import org.greenrobot.greendao.annotation.Index;
 
 @Entity(nameInDb = "t_message")
 public class Message {
@@ -16,6 +17,7 @@ public class Message {
     private Long sendUserId;
 
     @NonNull
+    @Index
     private Long receiveUserId;
 
     @NonNull
