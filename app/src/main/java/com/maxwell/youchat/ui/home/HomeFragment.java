@@ -7,15 +7,11 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.ViewModelProvider;
 
 import com.maxwell.youchat.R;
 import com.maxwell.youchat.YouChatApplication;
@@ -54,29 +50,11 @@ public class HomeFragment extends Fragment {
         messageDao = daoSession.getMessageDao();
         itemList = new ArrayList<>();
         listView = root.findViewById(R.id.chat_listview);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(getActivity(), ChatActivity.class);
-                startActivity(intent);
-            }
+        listView.setOnItemClickListener((parent, view, position, id) -> {
+            Intent intent = new Intent(getActivity(), ChatActivity.class);
+            startActivity(intent);
         });
-        List<Friend> friendList = friendDao.queryRaw("WHERE LAST_MESSAGE_ID IS NOT null");
-        for(Friend friend : friendList) {
-            Long messageId = friend.getLastMessageId();
-            List<Message> messages = messageDao.queryRaw("WHERE _id = " + messageId);
-            Message message = messages.get(0);
-            HashMap<String, Object> newItem = new HashMap<>();
-            newItem.put("username", friend.getUsername());
-            newItem.put("message", message.getContent());
-            Long createTime = message.getCreateTime();
-            String date = timeFormat(createTime);
-            newItem.put("time", date);
-            newItem.put("icon", R.drawable.smile_face_24dp);
-            itemList.add(newItem);
-        }
-        friendChatAdapter = new FriendChatAdapter(getActivity(), itemList);
-        listView.setAdapter(friendChatAdapter);
+        setListViewAdapter();
         button = root.findViewById(R.id.button);
         button.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), ChatActivity.class);
@@ -89,6 +67,10 @@ public class HomeFragment extends Fragment {
     public void onResume() {
         super.onResume();
         itemList = new ArrayList<>();
+        setListViewAdapter();
+    }
+
+    private void setListViewAdapter() {
         List<Friend> friendList = friendDao.queryRaw("WHERE LAST_MESSAGE_ID IS NOT null");
         for(Friend friend : friendList) {
             Long messageId = friend.getLastMessageId();

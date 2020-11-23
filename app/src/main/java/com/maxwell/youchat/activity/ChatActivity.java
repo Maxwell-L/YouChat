@@ -1,6 +1,7 @@
 package com.maxwell.youchat.activity;
 
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -48,6 +49,11 @@ public class ChatActivity extends AppCompatActivity {
         listView = findViewById(R.id.message_list);
         // 从数据库加载消息并进行消息展示
         itemList = new ArrayList<>();
+        setListViewAdapter();
+        button.setOnClickListener(new ButtonOnClickListener());
+    }
+
+    private void setListViewAdapter() {
         List<Message> messageList = messageDao.queryRaw("WHERE RECEIVE_USER_ID = 1");
         for(Message message : messageList) {
             HashMap<String, Object> newItem = new HashMap<>();
@@ -57,7 +63,11 @@ public class ChatActivity extends AppCompatActivity {
         }
         messageAdapter = new MessageAdapter(this, itemList);
         listView.setAdapter(messageAdapter);
-        button.setOnClickListener((v -> {
+    }
+
+    private class ButtonOnClickListener implements View.OnClickListener {
+        @Override
+        public void onClick(View v) {
             String text = editText.getText().toString();
             if(text == null || text.length() == 0) {
                 editText.setHint("发送内容不能为空");
@@ -87,8 +97,6 @@ public class ChatActivity extends AppCompatActivity {
                 }
                 editText.setText("");
             }
-        }));
+        }
     }
-
-
 }
