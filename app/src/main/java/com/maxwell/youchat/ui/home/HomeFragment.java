@@ -17,10 +17,11 @@ import com.maxwell.youchat.R;
 import com.maxwell.youchat.YouChatApplication;
 import com.maxwell.youchat.activity.ChatActivity;
 import com.maxwell.youchat.adapter.FriendChatAdapter;
+import com.maxwell.youchat.entity.ChatMessage;
+import com.maxwell.youchat.entity.ChatMessageDao;
 import com.maxwell.youchat.entity.DaoSession;
 import com.maxwell.youchat.entity.Friend;
 import com.maxwell.youchat.entity.FriendDao;
-import com.maxwell.youchat.entity.Message;
 import com.maxwell.youchat.entity.MessageDao;
 
 import java.util.ArrayList;
@@ -30,7 +31,6 @@ import java.util.List;
 
 public class HomeFragment extends Fragment {
 
-//    private HomeViewModel homeViewModel;
     private View root;
     private Button button;
     private ListView listView;
@@ -38,16 +38,30 @@ public class HomeFragment extends Fragment {
     private FriendChatAdapter friendChatAdapter;
     private DaoSession daoSession;
     private FriendDao friendDao;
-    private MessageDao messageDao;
+    private ChatMessageDao chatMessageDao;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-//        homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
+        initDb();
         root = inflater.inflate(R.layout.fragment_home, container, false);
+        initView();
+        return root;
+    }
+
+    /**
+     * 初始化 Db 相关
+     */
+    private void initDb() {
         daoSession = ((YouChatApplication)getActivity().getApplication()).getDaoSession();
         friendDao = daoSession.getFriendDao();
-        messageDao = daoSession.getMessageDao();
+        chatMessageDao = daoSession.getChatMessageDao();
+    }
+
+    /**
+     * 初始化 View
+     */
+    private void initView() {
         itemList = new ArrayList<>();
         listView = root.findViewById(R.id.chat_listview);
         listView.setOnItemClickListener((parent, view, position, id) -> {
@@ -60,9 +74,11 @@ public class HomeFragment extends Fragment {
             Intent intent = new Intent(getActivity(), ChatActivity.class);
             startActivity(intent);
         });
-        return root;
     }
 
+    /**
+     * 从其它 activity 返回时更新数据
+     */
     @Override
     public void onResume() {
         super.onResume();
@@ -70,16 +86,19 @@ public class HomeFragment extends Fragment {
         setListViewAdapter();
     }
 
+    /**
+     * ListView 绑定 adpater
+     */
     private void setListViewAdapter() {
         List<Friend> friendList = friendDao.queryRaw("WHERE LAST_MESSAGE_ID IS NOT null");
         for(Friend friend : friendList) {
             Long messageId = friend.getLastMessageId();
-            List<Message> messages = messageDao.queryRaw("WHERE _id = " + messageId);
-            Message message = messages.get(0);
+            List<ChatMessage> chatMessages = chatMessageDao.queryRaw("WHERE _id = " + messageId);
+            ChatMessage chatMessage = chatMessages.get(0);
             HashMap<String, Object> newItem = new HashMap<>();
             newItem.put("username", friend.getUsername());
-            newItem.put("message", message.getContent());
-            Long createTime = message.getCreateTime();
+            newItem.put("message", chatMessage.getContent());
+            Long createTime = chatMessage.getCreateTime();
             String date = timeFormat(createTime);
             newItem.put("time", date);
             newItem.put("icon", R.drawable.smile_face_24dp);
@@ -89,6 +108,11 @@ public class HomeFragment extends Fragment {
         listView.setAdapter(friendChatAdapter);
     }
 
+    /**
+     * 时间格式转换
+     * @param time
+     * @return
+     */
     private String timeFormat(Long time) {
         StringBuilder res = new StringBuilder();
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

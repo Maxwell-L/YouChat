@@ -9,7 +9,7 @@ import org.greenrobot.greendao.annotation.Generated;
 import org.greenrobot.greendao.annotation.Index;
 
 @Entity(nameInDb = "t_message")
-public class Message {
+public class ChatMessage {
     @Id
     private Long id;
 
@@ -29,8 +29,8 @@ public class Message {
     private String content;
 
 
-    @Generated(hash = 75079361)
-    public Message(Long id, @NonNull Long sendUserId, @NonNull Long receiveUserId,
+    @Generated(hash = 1576009258)
+    public ChatMessage(Long id, @NonNull Long sendUserId, @NonNull Long receiveUserId,
             Long groupId, @NonNull Long createTime, @NonNull String content) {
         this.id = id;
         this.sendUserId = sendUserId;
@@ -40,8 +40,8 @@ public class Message {
         this.content = content;
     }
 
-    @Generated(hash = 637306882)
-    public Message() {
+    @Generated(hash = 2271208)
+    public ChatMessage() {
     }
 
     public Long getId() {
