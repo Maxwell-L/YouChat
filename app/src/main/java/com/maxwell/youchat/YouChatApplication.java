@@ -2,6 +2,7 @@ package com.maxwell.youchat;
 
 import android.app.Application;
 
+import com.maxwell.youchat.client.UserWebSocketClient;
 import com.maxwell.youchat.entity.DaoMaster;
 import com.maxwell.youchat.entity.DaoSession;
 
@@ -24,4 +25,5 @@ public class YouChatApplication extends Application {
     public DaoSession getDaoSession() {
         return daoSession;
     }
+
 }

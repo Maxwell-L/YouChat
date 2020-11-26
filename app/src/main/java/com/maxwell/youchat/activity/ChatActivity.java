@@ -1,13 +1,7 @@
 package com.maxwell.youchat.activity;
 
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -15,29 +9,26 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.alibaba.fastjson.JSONObject;
 import com.maxwell.youchat.R;
 import com.maxwell.youchat.YouChatApplication;
-import com.maxwell.youchat.adapter.MessageAdapter;
+import com.maxwell.youchat.adapter.ChatMessageAdapter;
 import com.maxwell.youchat.client.UserWebSocketClient;
 import com.maxwell.youchat.entity.ChatMessage;
 import com.maxwell.youchat.entity.ChatMessageDao;
 import com.maxwell.youchat.entity.DaoSession;
 import com.maxwell.youchat.entity.Friend;
 import com.maxwell.youchat.entity.FriendDao;
-import com.maxwell.youchat.entity.MessageDao;
-import com.maxwell.youchat.service.SendMessageService;
 
 import org.java_websocket.handshake.ServerHandshake;
 
+
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 
 public class ChatActivity extends AppCompatActivity {
@@ -46,34 +37,16 @@ public class ChatActivity extends AppCompatActivity {
     private EditText editText;
     private Button button;
     private ListView listView;
-    private List<HashMap<String, Object>> itemList;
-    private MessageAdapter messageAdapter;
+
+    private List<ChatMessage> messageList;
+    private ChatMessageAdapter chatMessageAdapter;
+
     private DaoSession daoSession;
     private ChatMessageDao messageDao;
     private FriendDao friendDao;
 
     private UserWebSocketClient client;
-    private String defaultServerAddress = "ws://10.0.2.2:8080/message";
-    private MessageHandler messageHandler;
-
-//    private SendMessageService.UserWebSocketClientBinder binder;
-//    private SendMessageService sendMessageService;
-
-
-//    private ServiceConnection serviceConnection = new ServiceConnection() {
-//        @Override
-//        public void onServiceConnected(ComponentName name, IBinder service) {
-//            Log.e("ChatActivity", "绑定服务");
-//            binder = (SendMessageService.UserWebSocketClientBinder) service;
-//            sendMessageService = binder.getService();
-//            client = sendMessageService.webSocketClient;
-//        }
-//
-//        @Override
-//        public void onServiceDisconnected(ComponentName name) {
-//
-//        }
-//    };
+    private String defaultServerAddress = "ws://172.29.6.170:8080/message";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -84,8 +57,6 @@ public class ChatActivity extends AppCompatActivity {
         initView();
 
         connectServer();
-
-//        bindService();
     }
 
     /**
@@ -106,7 +77,6 @@ public class ChatActivity extends AppCompatActivity {
         button = findViewById(R.id.send_button);
         listView = findViewById(R.id.message_list);
         // 从数据库加载消息并进行消息展示
-        itemList = new ArrayList<>();
         setListViewAdapter();
         button.setOnClickListener(new ButtonOnClickListener());
     }
@@ -116,15 +86,9 @@ public class ChatActivity extends AppCompatActivity {
      *
      */
     private void setListViewAdapter() {
-        List<ChatMessage> chatMessageList = messageDao.queryRaw("WHERE RECEIVE_USER_ID = 1");
-        for(ChatMessage chatMessage : chatMessageList) {
-            HashMap<String, Object> newItem = new HashMap<>();
-            newItem.put("content", chatMessage.getContent());
-            newItem.put("image", R.drawable.smile_face_24dp);
-            itemList.add(newItem);
-        }
-        messageAdapter = new MessageAdapter(this, itemList);
-        listView.setAdapter(messageAdapter);
+        messageList = messageDao.queryRaw("WHERE RECEIVE_USER_ID = 1 OR SEND_USER_ID = 1");
+        chatMessageAdapter = new ChatMessageAdapter(this, messageList);
+        listView.setAdapter(chatMessageAdapter);
     }
 
     /**
@@ -149,11 +113,8 @@ public class ChatActivity extends AppCompatActivity {
                     Toast.makeText(context, "not connect", Toast.LENGTH_LONG).show();
                 }
                 // 2. 添加到 ListView 显示
-                HashMap<String, Object> newItem = new HashMap<>();
-                newItem.put("content", text);
-                newItem.put("image", R.drawable.smile_face_24dp);
-                itemList.add(newItem);
-                messageAdapter.notifyDataSetChanged();
+                messageList.add(chatMessage);
+                chatMessageAdapter.notifyDataSetChanged();
                 // 3. 更新最后一条消息在 HomeFragment 显示
                 // 引入好友功能后修改
                 List<Friend> friendList = friendDao.queryRaw("WHERE _id = 1");
@@ -188,10 +149,25 @@ public class ChatActivity extends AppCompatActivity {
             @Override
             public void onMessage(String message) {
                 Log.d("webSocketClient", message);
-                Message msg = messageHandler.obtainMessage();
-                msg.what = 1;
-                msg.obj = message;
-                messageHandler.sendMessage(msg);
+
+                ChatMessage chatMessage = JSONObject.parseObject(message, ChatMessage.class);
+                chatMessage.setContent("服务器:" + chatMessage.getContent());
+                Long messageId = messageDao.insert(chatMessage);
+
+                // 1. 添加到 ListView 显示
+                messageList.add(chatMessage);
+                chatMessageAdapter.notifyDataSetChanged();
+                // 3. 更新最后一条消息在 HomeFragment 显示
+                // 引入好友功能后修改
+                List<Friend> friendList = friendDao.queryRaw("WHERE _id = 1");
+                if(friendList == null || friendList.size() == 0) {
+                    Friend friend = new Friend(null, "凉皮", 0, null, messageId);
+                    friendDao.insert(friend);
+                } else {
+                    Friend friend = friendList.get(0);
+                    friend.setLastMessageId(messageId);
+                    friendDao.update(friend);
+                }
             }
 
             @Override
@@ -221,25 +197,4 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
-//    /**
-//     * 绑定 Service
-//     */
-//    private void bindService() {
-//        Intent intent = new Intent(this, SendMessageService.class);
-//        bindService(intent, serviceConnection, BIND_AUTO_CREATE);
-//    }
-
-    private class MessageHandler extends Handler {
-        @Override
-        public void handleMessage(@NonNull Message msg) {
-            switch (msg.what) {
-                case 1:
-                    String receive = (String) msg.obj;
-                    Toast.makeText(context, receive, Toast.LENGTH_LONG).show();
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
 }

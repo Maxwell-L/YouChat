@@ -23,7 +23,7 @@
         app:bl_bubbleColor="@color/lime">
 
         <TextView
-            android:id="@+id/message_content"
+            android:id="@+id/send_message_content"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
