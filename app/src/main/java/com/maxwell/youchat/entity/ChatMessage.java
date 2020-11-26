@@ -91,4 +91,23 @@ public class ChatMessage {
     public void setContent(String content) {
         this.content = content;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("{");
+        sb.append("\"id\":")
+                .append(id);
+        sb.append(",\"sendUserId\":")
+                .append(sendUserId);
+        sb.append(",\"receiveUserId\":")
+                .append(receiveUserId);
+        sb.append(",\"groupId\":")
+                .append(groupId);
+        sb.append(",\"createTime\":")
+                .append(createTime);
+        sb.append(",\"content\":\"")
+                .append(content).append('\"');
+        sb.append('}');
+        return sb.toString();
+    }
 }

@@ -1,16 +1,21 @@
 package com.maxwell.youchat.activity;
 
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -26,6 +31,10 @@ import com.maxwell.youchat.entity.FriendDao;
 import com.maxwell.youchat.entity.MessageDao;
 import com.maxwell.youchat.service.SendMessageService;
 
+import org.java_websocket.handshake.ServerHandshake;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -33,6 +42,7 @@ import java.util.List;
 
 public class ChatActivity extends AppCompatActivity {
 
+    private Context context;
     private EditText editText;
     private Button button;
     private ListView listView;
@@ -43,24 +53,27 @@ public class ChatActivity extends AppCompatActivity {
     private FriendDao friendDao;
 
     private UserWebSocketClient client;
-    private SendMessageService.UserWebSocketClientBinder binder;
-    private SendMessageService sendMessageService;
+    private String defaultServerAddress = "ws://10.0.2.2:8080/message";
+    private MessageHandler messageHandler;
+
+//    private SendMessageService.UserWebSocketClientBinder binder;
+//    private SendMessageService sendMessageService;
 
 
-    private ServiceConnection serviceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            Log.e("ChatActivity", "绑定服务");
-            binder = (SendMessageService.UserWebSocketClientBinder) service;
-            sendMessageService = binder.getService();
-            client = sendMessageService.webSocketClient;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-
-        }
-    };
+//    private ServiceConnection serviceConnection = new ServiceConnection() {
+//        @Override
+//        public void onServiceConnected(ComponentName name, IBinder service) {
+//            Log.e("ChatActivity", "绑定服务");
+//            binder = (SendMessageService.UserWebSocketClientBinder) service;
+//            sendMessageService = binder.getService();
+//            client = sendMessageService.webSocketClient;
+//        }
+//
+//        @Override
+//        public void onServiceDisconnected(ComponentName name) {
+//
+//        }
+//    };
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -69,6 +82,8 @@ public class ChatActivity extends AppCompatActivity {
 
         initDb();
         initView();
+
+        connectServer();
 
 //        bindService();
     }
@@ -86,6 +101,7 @@ public class ChatActivity extends AppCompatActivity {
      * 初始化视图
      */
     private void initView() {
+        context = this;
         editText = findViewById(R.id.edit_text);
         button = findViewById(R.id.send_button);
         listView = findViewById(R.id.message_list);
@@ -127,6 +143,11 @@ public class ChatActivity extends AppCompatActivity {
                 ChatMessage chatMessage = new ChatMessage(null, 0L, 1L, null, new Date().getTime(), text);
                 Long messageId = messageDao.insert(chatMessage);
                 // 把消息发送给对方/服务器
+                if(client != null) {
+                    client.send(chatMessage.toString());
+                } else {
+                    Toast.makeText(context, "not connect", Toast.LENGTH_LONG).show();
+                }
                 // 2. 添加到 ListView 显示
                 HashMap<String, Object> newItem = new HashMap<>();
                 newItem.put("content", text);
@@ -149,11 +170,76 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * 绑定 Service
-     */
-    private void bindService() {
-        Intent intent = new Intent(this, SendMessageService.class);
-        bindService(intent, serviceConnection, BIND_AUTO_CREATE);
+    private void connectServer() {
+        URI uri = null;
+        try {
+            uri = new URI(defaultServerAddress);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            Log.d("webSocketClient", e.toString());
+        }
+
+        client = new UserWebSocketClient(uri) {
+            @Override
+            public void onOpen(ServerHandshake handshakedata) {
+                Log.d("webSocketClient", String.valueOf(handshakedata.getHttpStatus()));
+            }
+
+            @Override
+            public void onMessage(String message) {
+                Log.d("webSocketClient", message);
+                Message msg = messageHandler.obtainMessage();
+                msg.what = 1;
+                msg.obj = message;
+                messageHandler.sendMessage(msg);
+            }
+
+            @Override
+            public void onClose(int code, String reason, boolean remote) {
+                Log.d("webSocketClient", reason);
+                client = null;
+            }
+
+            @Override
+            public void onError(Exception ex) {
+                Log.d("webSocket", ex.toString());
+                client = null;
+            }
+        };
+
+        try {
+            boolean connection = client.connectBlocking();
+            if(connection) {
+                Toast.makeText(this, "connect success", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(this, "connect fail", Toast.LENGTH_LONG).show();
+                client = null;
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            Log.d("webSocketClient", e.toString());
+        }
+    }
+
+//    /**
+//     * 绑定 Service
+//     */
+//    private void bindService() {
+//        Intent intent = new Intent(this, SendMessageService.class);
+//        bindService(intent, serviceConnection, BIND_AUTO_CREATE);
+//    }
+
+    private class MessageHandler extends Handler {
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            switch (msg.what) {
+                case 1:
+                    String receive = (String) msg.obj;
+                    Toast.makeText(context, receive, Toast.LENGTH_LONG).show();
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 }
