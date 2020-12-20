@@ -12,6 +12,8 @@ public class YouChatApplication extends Application {
 
     private DaoSession daoSession;
 
+    private UserWebSocketClient client;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -24,6 +26,14 @@ public class YouChatApplication extends Application {
 
     public DaoSession getDaoSession() {
         return daoSession;
+    }
+
+    public void setClient(UserWebSocketClient client) {
+        this.client = client;
+    }
+
+    public UserWebSocketClient getClient() {
+        return client;
     }
 
 }

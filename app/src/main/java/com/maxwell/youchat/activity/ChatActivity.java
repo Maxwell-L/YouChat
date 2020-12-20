@@ -30,6 +30,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -46,7 +47,8 @@ public class ChatActivity extends AppCompatActivity {
     private FriendDao friendDao;
 
     private UserWebSocketClient client;
-    private String defaultServerAddress = "ws://172.29.6.170:8080/message";
+//    private String defaultServerAddress = "ws://8.135.101.106:80/message";
+    private String defaultServerAddress = "ws://10.0.2.2:8080/message";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -55,8 +57,8 @@ public class ChatActivity extends AppCompatActivity {
 
         initDb();
         initView();
-
-        connectServer();
+        client = ((YouChatApplication)getApplication()).getClient();
+//        connectServer();
     }
 
     /**
@@ -184,7 +186,7 @@ public class ChatActivity extends AppCompatActivity {
         };
 
         try {
-            boolean connection = client.connectBlocking();
+            boolean connection = client.connectBlocking(1000, TimeUnit.MICROSECONDS);
             if(connection) {
                 Toast.makeText(this, "connect success", Toast.LENGTH_LONG).show();
             } else {
