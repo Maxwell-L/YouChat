@@ -76,7 +76,10 @@ public class WebSocketClientService extends Service {
             @Override
             public void onMessage(String message) {
                 Log.d("webSocketClient", message);
-
+                Intent intent = new Intent();
+                intent.putExtra("message", message);
+                intent.setAction("com.maxwell.youchat.service.WebSocketClientService");
+                sendBroadcast(intent);
             }
 
             @Override

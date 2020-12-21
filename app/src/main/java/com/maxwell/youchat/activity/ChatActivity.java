@@ -1,6 +1,9 @@
 package com.maxwell.youchat.activity;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -46,7 +49,10 @@ public class ChatActivity extends AppCompatActivity {
     private ChatMessageDao messageDao;
     private FriendDao friendDao;
 
+    private MessageReceiver receiver;
+
     private UserWebSocketClient client;
+    private Long userId;
 //    private String defaultServerAddress = "ws://8.135.101.106:80/message";
     private String defaultServerAddress = "ws://10.0.2.2:8080/message";
 
@@ -58,7 +64,11 @@ public class ChatActivity extends AppCompatActivity {
         initDb();
         initView();
         client = ((YouChatApplication)getApplication()).getClient();
-//        connectServer();
+        userId = ((YouChatApplication)getApplication()).getUserId();
+        receiver = new MessageReceiver();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("com.maxwell.youchat.service.WebSocketClientService");
+        this.registerReceiver(receiver, filter);
     }
 
     /**
@@ -88,7 +98,7 @@ public class ChatActivity extends AppCompatActivity {
      *
      */
     private void setListViewAdapter() {
-        messageList = messageDao.queryRaw("WHERE RECEIVE_USER_ID = 1 OR SEND_USER_ID = 1");
+        messageList = messageDao.queryRaw("WHERE RECEIVE_USER_ID = 0 OR SEND_USER_ID = 0");
         chatMessageAdapter = new ChatMessageAdapter(this, messageList);
         listView.setAdapter(chatMessageAdapter);
     }
@@ -106,22 +116,26 @@ public class ChatActivity extends AppCompatActivity {
                 editText.setHint("");
                 // TODO
                 // 1. 将消息保存到数据库
-                ChatMessage chatMessage = new ChatMessage(null, 0L, 1L, null, new Date().getTime(), text);
+                ChatMessage chatMessage = new ChatMessage(null, userId, userId ^ 1L, null, new Date().getTime(), text);
                 Long messageId = messageDao.insert(chatMessage);
-                // 把消息发送给对方/服务器
+                // 把消息发送给服务器
                 if(client != null) {
                     client.send(chatMessage.toString());
                 } else {
-                    Toast.makeText(context, "not connect", Toast.LENGTH_LONG).show();
+                    Toast.makeText(context, "登录过期，请重新登录...", Toast.LENGTH_LONG).show();
+                    Intent intent = new Intent(ChatActivity.this, LoginActivity.class);
+                    startActivity(intent);
+                    finish();
                 }
                 // 2. 添加到 ListView 显示
                 messageList.add(chatMessage);
                 chatMessageAdapter.notifyDataSetChanged();
                 // 3. 更新最后一条消息在 HomeFragment 显示
                 // 引入好友功能后修改
-                List<Friend> friendList = friendDao.queryRaw("WHERE _id = 1");
+                Long friendId = userId ^ 1L;
+                List<Friend> friendList = friendDao.queryRaw("WHERE _id = " + friendId);
                 if(friendList == null || friendList.size() == 0) {
-                    Friend friend = new Friend(null, "凉皮", 0, null, messageId);
+                    Friend friend = new Friend(friendId, "用户" + friendId, 0, null, messageId);
                     friendDao.insert(friend);
                 } else {
                     Friend friend = friendList.get(0);
@@ -133,69 +147,29 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
-    private void connectServer() {
-        URI uri = null;
-        try {
-            uri = new URI(defaultServerAddress);
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-            Log.d("webSocketClient", e.toString());
-        }
+    private class MessageReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Bundle bundle = intent.getExtras();
+            String message = bundle.getString("message");
+            ChatMessage chatMessage = JSONObject.parseObject(message, ChatMessage.class);
+            chatMessage.setContent("服务器:" + chatMessage.getContent());
+            Long messageId = messageDao.insert(chatMessage);
 
-        client = new UserWebSocketClient(uri) {
-            @Override
-            public void onOpen(ServerHandshake handshakedata) {
-                Log.d("webSocketClient", String.valueOf(handshakedata.getHttpStatus()));
-            }
-
-            @Override
-            public void onMessage(String message) {
-                Log.d("webSocketClient", message);
-
-                ChatMessage chatMessage = JSONObject.parseObject(message, ChatMessage.class);
-                chatMessage.setContent("服务器:" + chatMessage.getContent());
-                Long messageId = messageDao.insert(chatMessage);
-
-                // 1. 添加到 ListView 显示
-                messageList.add(chatMessage);
-                chatMessageAdapter.notifyDataSetChanged();
-                // 3. 更新最后一条消息在 HomeFragment 显示
-                // 引入好友功能后修改
-                List<Friend> friendList = friendDao.queryRaw("WHERE _id = 1");
-                if(friendList == null || friendList.size() == 0) {
-                    Friend friend = new Friend(null, "凉皮", 0, null, messageId);
-                    friendDao.insert(friend);
-                } else {
-                    Friend friend = friendList.get(0);
-                    friend.setLastMessageId(messageId);
-                    friendDao.update(friend);
-                }
-            }
-
-            @Override
-            public void onClose(int code, String reason, boolean remote) {
-                Log.d("webSocketClient", reason);
-                client = null;
-            }
-
-            @Override
-            public void onError(Exception ex) {
-                Log.d("webSocket", ex.toString());
-                client = null;
-            }
-        };
-
-        try {
-            boolean connection = client.connectBlocking(1000, TimeUnit.MICROSECONDS);
-            if(connection) {
-                Toast.makeText(this, "connect success", Toast.LENGTH_LONG).show();
+            // 1. 添加到 ListView 显示
+            messageList.add(chatMessage);
+            chatMessageAdapter.notifyDataSetChanged();
+            // 3. 更新最后一条消息在 HomeFragment 显示
+            // 引入好友功能后修改
+            List<Friend> friendList = friendDao.queryRaw("WHERE _id = 1");
+            if(friendList == null || friendList.size() == 0) {
+                Friend friend = new Friend(null, "凉皮", 0, null, messageId);
+                friendDao.insert(friend);
             } else {
-                Toast.makeText(this, "connect fail", Toast.LENGTH_LONG).show();
-                client = null;
+                Friend friend = friendList.get(0);
+                friend.setLastMessageId(messageId);
+                friendDao.update(friend);
             }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            Log.d("webSocketClient", e.toString());
         }
     }
 
