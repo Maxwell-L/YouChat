@@ -29,6 +29,8 @@
         <activity android:name=".activity.ChatActivity">
 
         </activity>
+
+        <service android:name=".service.WebSocketClientService" />
     </application>
 
 </manifest>

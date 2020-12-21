@@ -14,6 +14,8 @@ public class YouChatApplication extends Application {
 
     private UserWebSocketClient client;
 
+    private Long userId;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -36,4 +38,11 @@ public class YouChatApplication extends Application {
         return client;
     }
 
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
 }
