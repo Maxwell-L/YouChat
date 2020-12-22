@@ -134,6 +134,7 @@ public class ChatActivity extends AppCompatActivity {
                 chatMessageAdapter.notifyDataSetChanged();
                 // 3. 更新最后一条消息在 HomeFragment 显示
                 List<Friend> friendList = friendDao.queryRaw("WHERE _id = " + friendId);
+                // 引入好友功能后删除
                 if(friendList == null || friendList.size() == 0) {
                     Friend friend = new Friend(friendId, "用户" + friendId, 0, null, messageId);
                     friendDao.insert(friend);
