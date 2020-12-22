@@ -39,11 +39,13 @@ public class HomeFragment extends Fragment {
     private DaoSession daoSession;
     private FriendDao friendDao;
     private ChatMessageDao chatMessageDao;
+    private Long userId;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         initDb();
+        userId = ((YouChatApplication) getActivity().getApplication()).getUserId();
         root = inflater.inflate(R.layout.fragment_home, container, false);
         initView();
         return root;
@@ -90,7 +92,7 @@ public class HomeFragment extends Fragment {
      * ListView 绑定 adpater
      */
     private void setListViewAdapter() {
-        List<Friend> friendList = friendDao.queryRaw("WHERE LAST_MESSAGE_ID IS NOT null");
+        List<Friend> friendList = friendDao.queryRaw("WHERE LAST_MESSAGE_ID IS NOT null AND _id != " + userId);
         for(Friend friend : friendList) {
             Long messageId = friend.getLastMessageId();
             List<ChatMessage> chatMessages = chatMessageDao.queryRaw("WHERE _id = " + messageId);

@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.maxwell.youchat.R;
+import com.maxwell.youchat.YouChatApplication;
 import com.maxwell.youchat.entity.ChatMessage;
 
 import java.util.List;
@@ -42,7 +43,8 @@ public class ChatMessageAdapter extends BaseAdapter {
         ChatMessage chatMessage = chatMessageList.get(position);
         String content = chatMessage.getContent();
         Long sendUserId = chatMessage.getSendUserId();
-        if(sendUserId == 0) {
+        Long userId = YouChatApplication.getInstance().getUserId();
+        if(sendUserId == userId) {
             convertView = View.inflate(context, R.layout.send_message_item, null);
             TextView tv = convertView.findViewById(R.id.send_message_content);
             ImageView iv = convertView.findViewById(R.id.message_sender_image);

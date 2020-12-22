@@ -53,6 +53,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private UserWebSocketClient client;
     private Long userId;
+    private Long friendId;
 //    private String defaultServerAddress = "ws://8.135.101.106:80/message";
     private String defaultServerAddress = "ws://10.0.2.2:8080/message";
 
@@ -60,12 +61,12 @@ public class ChatActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
-
-        initDb();
-        initView();
         client = ((YouChatApplication)getApplication()).getClient();
         userId = ((YouChatApplication)getApplication()).getUserId();
+        friendId = userId ^ 1L;
         receiver = new MessageReceiver();
+        initDb();
+        initView();
         IntentFilter filter = new IntentFilter();
         filter.addAction("com.maxwell.youchat.service.WebSocketClientService");
         this.registerReceiver(receiver, filter);
@@ -98,7 +99,8 @@ public class ChatActivity extends AppCompatActivity {
      *
      */
     private void setListViewAdapter() {
-        messageList = messageDao.queryRaw("WHERE RECEIVE_USER_ID = 0 OR SEND_USER_ID = 0");
+        String whereSQL = "WHERE RECEIVE_USER_ID = " + userId + " OR SEND_USER_ID = " + userId;
+        messageList = messageDao.queryRaw(whereSQL);
         chatMessageAdapter = new ChatMessageAdapter(this, messageList);
         listView.setAdapter(chatMessageAdapter);
     }
@@ -131,8 +133,6 @@ public class ChatActivity extends AppCompatActivity {
                 messageList.add(chatMessage);
                 chatMessageAdapter.notifyDataSetChanged();
                 // 3. 更新最后一条消息在 HomeFragment 显示
-                // 引入好友功能后修改
-                Long friendId = userId ^ 1L;
                 List<Friend> friendList = friendDao.queryRaw("WHERE _id = " + friendId);
                 if(friendList == null || friendList.size() == 0) {
                     Friend friend = new Friend(friendId, "用户" + friendId, 0, null, messageId);
@@ -160,10 +160,9 @@ public class ChatActivity extends AppCompatActivity {
             messageList.add(chatMessage);
             chatMessageAdapter.notifyDataSetChanged();
             // 3. 更新最后一条消息在 HomeFragment 显示
-            // 引入好友功能后修改
-            List<Friend> friendList = friendDao.queryRaw("WHERE _id = 1");
+            List<Friend> friendList = friendDao.queryRaw("WHERE _id = " + friendId);
             if(friendList == null || friendList.size() == 0) {
-                Friend friend = new Friend(null, "凉皮", 0, null, messageId);
+                Friend friend = new Friend(friendId, "用户" + friendId, 0, null, messageId);
                 friendDao.insert(friend);
             } else {
                 Friend friend = friendList.get(0);

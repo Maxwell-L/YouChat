@@ -16,6 +16,8 @@ public class YouChatApplication extends Application {
 
     private Long userId;
 
+    private static YouChatApplication instance;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -24,6 +26,7 @@ public class YouChatApplication extends Application {
         Database db = helper.getWritableDb();
 
         daoSession = new DaoMaster(db).newSession();
+        instance = this;
     }
 
     public DaoSession getDaoSession() {
@@ -44,5 +47,9 @@ public class YouChatApplication extends Application {
 
     public void setUserId(Long userId) {
         this.userId = userId;
+    }
+
+    public static YouChatApplication getInstance() {
+        return instance;
     }
 }
