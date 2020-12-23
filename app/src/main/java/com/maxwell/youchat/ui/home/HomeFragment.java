@@ -26,13 +26,15 @@ import com.maxwell.youchat.entity.MessageDao;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 public class HomeFragment extends Fragment {
 
     private View root;
-    private Button button;
     private ListView listView;
     private List<HashMap<String, Object>> itemList;
     private FriendChatAdapter friendChatAdapter;
@@ -55,7 +57,7 @@ public class HomeFragment extends Fragment {
      * 初始化 Db 相关
      */
     private void initDb() {
-        daoSession = ((YouChatApplication)getActivity().getApplication()).getDaoSession();
+        daoSession = ((YouChatApplication) getActivity().getApplication()).getDaoSession();
         friendDao = daoSession.getFriendDao();
         chatMessageDao = daoSession.getChatMessageDao();
     }
@@ -71,11 +73,6 @@ public class HomeFragment extends Fragment {
             startActivity(intent);
         });
         setListViewAdapter();
-        button = root.findViewById(R.id.button);
-        button.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), ChatActivity.class);
-            startActivity(intent);
-        });
     }
 
     /**
@@ -93,10 +90,28 @@ public class HomeFragment extends Fragment {
      */
     private void setListViewAdapter() {
         List<Friend> friendList = friendDao.queryRaw("WHERE LAST_MESSAGE_ID IS NOT null AND _id != " + userId);
+        if (friendList.isEmpty()) {
+            List<ChatMessage> chatMessages = chatMessageDao.queryRaw("WHERE SEND_USER_ID != " + userId);
+            Set<Long> friendSet = new HashSet<>();
+            for (int i = chatMessages.size() - 1; i >= 0; i--) {
+                Long friendId = chatMessages.get(i).getSendUserId();
+                if (!friendSet.contains(friendId)) {
+                    List<Friend> friends = friendDao.queryRaw("WHERE _id = " + friendId);
+                    if (friends.isEmpty()) {
+                        Friend newFriend = new Friend(friendId, "用户" + friendId, 0, null, chatMessages.get(i).getId());
+                        friendDao.insertOrReplace(newFriend);
+                        friendList.add(newFriend);
+                    } else {
+                        friendList.add(friends.get(0));
+                    }
+                }
+            }
+        }
         for(Friend friend : friendList) {
-            Long messageId = friend.getLastMessageId();
-            List<ChatMessage> chatMessages = chatMessageDao.queryRaw("WHERE _id = " + messageId);
-            ChatMessage chatMessage = chatMessages.get(0);
+            List<ChatMessage> chatMessages = chatMessageDao.queryRaw("WHERE RECEIVE_USER_ID = " + userId + " OR SEND_USER_ID = " + userId);
+
+            ChatMessage chatMessage = chatMessages.get(chatMessages.size() - 1);
+            friend.setLastMessageId(chatMessage.getId());
             HashMap<String, Object> newItem = new HashMap<>();
             newItem.put("username", friend.getUsername());
             newItem.put("message", chatMessage.getContent());

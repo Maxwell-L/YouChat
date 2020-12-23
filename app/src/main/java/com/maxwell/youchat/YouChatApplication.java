@@ -8,6 +8,10 @@ import com.maxwell.youchat.entity.DaoSession;
 
 import org.greenrobot.greendao.database.Database;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class YouChatApplication extends Application {
 
     private DaoSession daoSession;
@@ -15,6 +19,8 @@ public class YouChatApplication extends Application {
     private UserWebSocketClient client;
 
     private Long userId;
+
+    private ConcurrentHashMap<Long, Boolean> isFriendOnlineMap;
 
     private static YouChatApplication instance;
 
@@ -24,7 +30,7 @@ public class YouChatApplication extends Application {
 
         DaoMaster.DevOpenHelper helper = new DaoMaster.DevOpenHelper(this, "youchat-db");
         Database db = helper.getWritableDb();
-
+        isFriendOnlineMap = new ConcurrentHashMap<>();
         daoSession = new DaoMaster(db).newSession();
         instance = this;
     }
@@ -47,6 +53,14 @@ public class YouChatApplication extends Application {
 
     public void setUserId(Long userId) {
         this.userId = userId;
+    }
+
+    public ConcurrentHashMap<Long, Boolean> getIsFriendOnlineMap() {
+        return isFriendOnlineMap;
+    }
+
+    public void setIsFriendOnlineMap(ConcurrentHashMap<Long, Boolean> isFriendOnlineMap) {
+        this.isFriendOnlineMap = isFriendOnlineMap;
     }
 
     public static YouChatApplication getInstance() {

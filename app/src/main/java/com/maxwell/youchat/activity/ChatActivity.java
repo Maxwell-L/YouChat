@@ -137,7 +137,7 @@ public class ChatActivity extends AppCompatActivity {
                 // 引入好友功能后删除
                 if(friendList == null || friendList.size() == 0) {
                     Friend friend = new Friend(friendId, "用户" + friendId, 0, null, messageId);
-                    friendDao.insert(friend);
+                    friendDao.insertOrReplace(friend);
                 } else {
                     Friend friend = friendList.get(0);
                     friend.setLastMessageId(messageId);
@@ -153,8 +153,11 @@ public class ChatActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             Bundle bundle = intent.getExtras();
             String message = bundle.getString("message");
+            if (message.charAt(0) != '{') {
+                return;
+            }
             ChatMessage chatMessage = JSONObject.parseObject(message, ChatMessage.class);
-            chatMessage.setContent("服务器:" + chatMessage.getContent());
+            chatMessage.setContent(chatMessage.getContent());
             Long messageId = messageDao.insert(chatMessage);
 
             // 1. 添加到 ListView 显示
@@ -164,7 +167,7 @@ public class ChatActivity extends AppCompatActivity {
             List<Friend> friendList = friendDao.queryRaw("WHERE _id = " + friendId);
             if(friendList == null || friendList.size() == 0) {
                 Friend friend = new Friend(friendId, "用户" + friendId, 0, null, messageId);
-                friendDao.insert(friend);
+                friendDao.insertOrReplace(friend);
             } else {
                 Friend friend = friendList.get(0);
                 friend.setLastMessageId(messageId);

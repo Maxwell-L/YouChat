@@ -45,7 +45,7 @@
         android:paddingRight="20dp"
         android:paddingBottom="10dp"
         android:textStyle="bold"
-        android:textColor="@color/green"
+        android:textColor="@color/royal_blue"
         android:text="在线"/>
 
 

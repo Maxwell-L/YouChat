@@ -14,9 +14,12 @@ import com.maxwell.youchat.client.UserWebSocketClient;
 
 import org.java_websocket.handshake.ServerHandshake;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class WebSocketClientService extends Service {
 
@@ -26,11 +29,14 @@ public class WebSocketClientService extends Service {
 
     private boolean isConnected;
 
+    private ConcurrentHashMap<Long, Boolean> isFriendOnlineMap;
+
     private static UserWebSocketClient client;
 
     @Override
     public void onCreate() {
         client = ((YouChatApplication) getApplication()).getClient();
+        isFriendOnlineMap = ((YouChatApplication) getApplication()).getIsFriendOnlineMap();
         super.onCreate();
     }
 
@@ -76,6 +82,10 @@ public class WebSocketClientService extends Service {
             @Override
             public void onMessage(String message) {
                 Log.d("webSocketClient", message);
+                if (message.charAt(0) != '{') {
+                    Boolean isFriendOnline = Boolean.valueOf(message);
+                    isFriendOnlineMap.put(userId ^ 1L, isFriendOnline);
+                }
                 Intent intent = new Intent();
                 intent.putExtra("message", message);
                 intent.setAction("com.maxwell.youchat.service.WebSocketClientService");
@@ -100,9 +110,22 @@ public class WebSocketClientService extends Service {
         try {
             boolean connection = client.connectBlocking();
             if(connection) {
-                ((YouChatApplication)getApplication()).setClient(client);
+                ((YouChatApplication) getApplication()).setClient(client);
+                ((YouChatApplication) getApplication()).setUserId(userId);
                 Toast.makeText(this, "登录成功", Toast.LENGTH_LONG).show();
                 this.isConnected = true;
+                // 开启子线程进行心跳检测, 测试好友是否在线
+                new Thread(() -> {
+                    while (true) {
+                        client.send(String.valueOf(userId ^ 1L));
+                        System.out.println("INFO::HEART CHECK");
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }).start();
             } else {
                 Toast.makeText(this, "连接不上服务器...", Toast.LENGTH_LONG).show();
                 client = null;
