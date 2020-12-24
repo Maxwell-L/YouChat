@@ -8,8 +8,6 @@ import com.maxwell.youchat.entity.DaoSession;
 
 import org.greenrobot.greendao.database.Database;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class YouChatApplication extends Application {

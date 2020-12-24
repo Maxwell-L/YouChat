@@ -18,4 +18,5 @@
     <color name="grey">#FF808080</color>
     <color name="blue">#FF0000FF</color>
     <color name="royal_blue">#FF4169E1</color>
+    <color name="red">#FFFF0000</color>
 </resources>

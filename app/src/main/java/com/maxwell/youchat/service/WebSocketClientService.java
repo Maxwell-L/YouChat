@@ -33,6 +33,8 @@ public class WebSocketClientService extends Service {
 
     private static UserWebSocketClient client;
 
+    private Thread heartbeatCheckThread;
+
     @Override
     public void onCreate() {
         client = ((YouChatApplication) getApplication()).getClient();
@@ -59,7 +61,7 @@ public class WebSocketClientService extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return new WebSocketBinder();
+        return null;
     }
 
     private void connectServer(Long userId) {
@@ -76,12 +78,12 @@ public class WebSocketClientService extends Service {
         client = new UserWebSocketClient(uri) {
             @Override
             public void onOpen(ServerHandshake handshakedata) {
-                Log.d("webSocketClient", String.valueOf(handshakedata.getHttpStatus()));
+                Log.d(TAG, String.valueOf(handshakedata.getHttpStatus()));
             }
 
             @Override
             public void onMessage(String message) {
-                Log.d("webSocketClient", message);
+                Log.d(TAG, message);
                 if (message.charAt(0) != '{') {
                     Boolean isFriendOnline = Boolean.valueOf(message);
                     isFriendOnlineMap.put(userId ^ 1L, isFriendOnline);
@@ -94,15 +96,17 @@ public class WebSocketClientService extends Service {
 
             @Override
             public void onClose(int code, String reason, boolean remote) {
+                heartbeatCheckThread.interrupt();
                 ((YouChatApplication)getApplication()).setClient(null);
-                Log.d("webSocketClient", reason);
+                Log.d(TAG, reason);
                 client = null;
             }
 
             @Override
             public void onError(Exception ex) {
+                heartbeatCheckThread.interrupt();
                 ((YouChatApplication)getApplication()).setClient(null);
-                Log.d("webSocket", ex.toString());
+                Log.d(TAG, ex.toString());
                 client = null;
             }
         };
@@ -115,17 +119,23 @@ public class WebSocketClientService extends Service {
                 Toast.makeText(this, "登录成功", Toast.LENGTH_LONG).show();
                 this.isConnected = true;
                 // 开启子线程进行心跳检测, 测试好友是否在线
-                new Thread(() -> {
-                    while (true) {
-                        client.send(String.valueOf(userId ^ 1L));
-                        System.out.println("INFO::HEART CHECK");
+                heartbeatCheckThread = new Thread(() -> {
+                    while (client != null && !Thread.currentThread().isInterrupted()) {
+                        try {
+                            client.send(String.valueOf(userId ^ 1L));
+                        } catch (Exception e) {
+                            break;
+                        }
+                        Log.d(TAG, "Heartbeat Check...");
                         try {
                             Thread.sleep(1000);
                         } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            Log.d(TAG, "Stop Heartbeat Check...");
+                            break;
                         }
                     }
-                }).start();
+                });
+                heartbeatCheckThread.start();
             } else {
                 Toast.makeText(this, "连接不上服务器...", Toast.LENGTH_LONG).show();
                 client = null;
@@ -133,14 +143,9 @@ public class WebSocketClientService extends Service {
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
-            Log.d("webSocketClient", e.toString());
+            Log.d(TAG, e.toString());
         }
         this.isConnected = false;
     }
 
-    public class WebSocketBinder extends Binder {
-        public WebSocketClientService getService() {
-            return WebSocketClientService.this;
-        }
-    }
 }
