@@ -33,9 +33,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
-public class ChatActivity extends AppCompatActivity {
+public class ChatActivity extends BaseActivity {
+
+    private static final String TAG = "ChatActivity";
 
     private Context context;
     private EditText editText;
@@ -54,8 +57,6 @@ public class ChatActivity extends AppCompatActivity {
     private UserWebSocketClient client;
     private Long userId;
     private Long friendId;
-//    private String defaultServerAddress = "ws://8.135.101.106:80/message";
-    private String defaultServerAddress = "ws://10.0.2.2:8080/message";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -70,6 +71,12 @@ public class ChatActivity extends AppCompatActivity {
         IntentFilter filter = new IntentFilter();
         filter.addAction("com.maxwell.youchat.service.WebSocketClientService");
         this.registerReceiver(receiver, filter);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        this.unregisterReceiver(receiver);
     }
 
     /**
@@ -89,6 +96,14 @@ public class ChatActivity extends AppCompatActivity {
         editText = findViewById(R.id.edit_text);
         button = findViewById(R.id.send_button);
         listView = findViewById(R.id.message_list);
+        // 判断有没有没接收到的消息
+        Queue<String> messageQueue = ((YouChatApplication) getApplication()).getTempMessageQueue();
+        while (!messageQueue.isEmpty()) {
+            String message = messageQueue.poll();
+            Log.d(TAG, "queue poll message");
+            ChatMessage chatMessage = JSONObject.parseObject(message, ChatMessage.class);
+            messageDao.insert(chatMessage);
+        }
         // 从数据库加载消息并进行消息展示
         setListViewAdapter();
         button.setOnClickListener(new ButtonOnClickListener());
@@ -128,13 +143,13 @@ public class ChatActivity extends AppCompatActivity {
                     Intent intent = new Intent(ChatActivity.this, LoginActivity.class);
                     startActivity(intent);
                     finish();
+                    return;
                 }
                 // 2. 添加到 ListView 显示
                 messageList.add(chatMessage);
                 chatMessageAdapter.notifyDataSetChanged();
                 // 3. 更新最后一条消息在 HomeFragment 显示
                 List<Friend> friendList = friendDao.queryRaw("WHERE _id = " + friendId);
-                // 引入好友功能后删除
                 if(friendList == null || friendList.size() == 0) {
                     Friend friend = new Friend(friendId, "用户" + friendId, 0, null, messageId);
                     friendDao.insertOrReplace(friend);
@@ -156,6 +171,7 @@ public class ChatActivity extends AppCompatActivity {
             if (message.charAt(0) != '{') {
                 return;
             }
+            Log.d(TAG, "Receiver receive message");
             ChatMessage chatMessage = JSONObject.parseObject(message, ChatMessage.class);
             chatMessage.setContent(chatMessage.getContent());
             Long messageId = messageDao.insert(chatMessage);

@@ -10,7 +10,9 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 
 import com.maxwell.youchat.YouChatApplication;
+import com.maxwell.youchat.activity.ChatActivity;
 import com.maxwell.youchat.client.UserWebSocketClient;
+import com.maxwell.youchat.controller.ActivityController;
 
 import org.java_websocket.handshake.ServerHandshake;
 
@@ -23,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class WebSocketClientService extends Service {
 
-    private static final String WEB_SOCKET_HOST = "ws://10.0.2.2:8080/message";
+    private static final String WEB_SOCKET_HOST = "ws://8.135.21.168/message";
 
     private static final String TAG = "WebSocketClient";
 
@@ -83,7 +85,6 @@ public class WebSocketClientService extends Service {
 
             @Override
             public void onMessage(String message) {
-                Log.d(TAG, message);
                 if (message.charAt(0) != '{') {
                     Boolean isFriendOnline = Boolean.valueOf(message);
                     isFriendOnlineMap.put(userId ^ 1L, isFriendOnline);
@@ -92,6 +93,10 @@ public class WebSocketClientService extends Service {
                 intent.putExtra("message", message);
                 intent.setAction("com.maxwell.youchat.service.WebSocketClientService");
                 sendBroadcast(intent);
+                if (message.charAt(0) == '{' && !ActivityController.isActivityExist(ChatActivity.class)) {
+                    Log.d(TAG, "message -> queue");
+                    ((YouChatApplication) getApplication()).getTempMessageQueue().offer(message);
+                }
             }
 
             @Override
@@ -100,6 +105,7 @@ public class WebSocketClientService extends Service {
                 ((YouChatApplication)getApplication()).setClient(null);
                 Log.d(TAG, reason);
                 client = null;
+                ActivityController.removeAllActivity();
             }
 
             @Override
@@ -126,9 +132,9 @@ public class WebSocketClientService extends Service {
                         } catch (Exception e) {
                             break;
                         }
-                        Log.d(TAG, "Heartbeat Check...");
+//                        Log.d(TAG, "Heartbeat Check...");
                         try {
-                            Thread.sleep(1000);
+                            Thread.sleep(100);
                         } catch (InterruptedException e) {
                             Log.d(TAG, "Stop Heartbeat Check...");
                             break;

@@ -25,7 +25,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
 
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends BaseActivity {
 
     private static final String USERNAME_ME = "admin";
     private static final String PASSWORD_ME = "admin";
@@ -38,8 +38,6 @@ public class LoginActivity extends AppCompatActivity {
     private EditText editTextUsername;
 
     private EditText editTextPassword;
-
-    private UserWebSocketClient client;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {

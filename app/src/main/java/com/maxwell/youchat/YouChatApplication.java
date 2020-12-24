@@ -8,6 +8,8 @@ import com.maxwell.youchat.entity.DaoSession;
 
 import org.greenrobot.greendao.database.Database;
 
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class YouChatApplication extends Application {
@@ -22,6 +24,8 @@ public class YouChatApplication extends Application {
 
     private static YouChatApplication instance;
 
+    private Queue<String> tempMessageQueue;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -29,6 +33,7 @@ public class YouChatApplication extends Application {
         DaoMaster.DevOpenHelper helper = new DaoMaster.DevOpenHelper(this, "youchat-db");
         Database db = helper.getWritableDb();
         isFriendOnlineMap = new ConcurrentHashMap<>();
+        tempMessageQueue = new LinkedList<>();
         daoSession = new DaoMaster(db).newSession();
         instance = this;
     }
@@ -57,9 +62,10 @@ public class YouChatApplication extends Application {
         return isFriendOnlineMap;
     }
 
-    public void setIsFriendOnlineMap(ConcurrentHashMap<Long, Boolean> isFriendOnlineMap) {
-        this.isFriendOnlineMap = isFriendOnlineMap;
+    public Queue<String> getTempMessageQueue() {
+        return tempMessageQueue;
     }
+
 
     public static YouChatApplication getInstance() {
         return instance;

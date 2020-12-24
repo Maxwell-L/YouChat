@@ -1,13 +1,15 @@
 package com.maxwell.youchat.ui.home;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.icu.text.DateFormat;
 import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ListView;
 
 import androidx.annotation.NonNull;
@@ -22,13 +24,11 @@ import com.maxwell.youchat.entity.ChatMessageDao;
 import com.maxwell.youchat.entity.DaoSession;
 import com.maxwell.youchat.entity.Friend;
 import com.maxwell.youchat.entity.FriendDao;
-import com.maxwell.youchat.entity.MessageDao;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 
@@ -42,6 +42,7 @@ public class HomeFragment extends Fragment {
     private FriendDao friendDao;
     private ChatMessageDao chatMessageDao;
     private Long userId;
+//    private MessageReceiver receiver;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -49,7 +50,11 @@ public class HomeFragment extends Fragment {
         initDb();
         userId = ((YouChatApplication) getActivity().getApplication()).getUserId();
         root = inflater.inflate(R.layout.fragment_home, container, false);
+//        receiver = new MessageReceiver();
         initView();
+//        IntentFilter filter = new IntentFilter();
+//        filter.addAction("com.maxwell.youchat.service.WebSocketClientService");
+//        getActivity().registerReceiver(receiver, filter);
         return root;
     }
 
@@ -141,4 +146,16 @@ public class HomeFragment extends Fragment {
         res.append(hourAndMinute[0] + ":" + hourAndMinute[1]);
         return res.toString();
     }
+
+//    private class MessageReceiver extends BroadcastReceiver {
+//        @Override
+//        public void onReceive(Context context, Intent intent) {
+//            Bundle bundle = intent.getExtras();
+//            String message = bundle.getString("message");
+//            if (message.charAt(0) != '{') {
+//                return;
+//            }
+//
+//        }
+//    }
 }
