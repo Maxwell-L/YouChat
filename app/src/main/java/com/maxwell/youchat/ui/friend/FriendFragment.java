@@ -37,6 +37,7 @@ public class FriendFragment extends Fragment {
     private Long userId;
     private FriendStateReceiver receiver;
 
+    @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         root = inflater.inflate(R.layout.fragment_friend, container, false);
@@ -53,6 +54,12 @@ public class FriendFragment extends Fragment {
         filter.addAction("com.maxwell.youchat.service.WebSocketClientService");
         getActivity().registerReceiver(receiver, filter);
         return root;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        getActivity().unregisterReceiver(receiver);
     }
 
     private void initDb() {

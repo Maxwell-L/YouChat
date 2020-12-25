@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 
 import com.maxwell.youchat.YouChatApplication;
 import com.maxwell.youchat.activity.ChatActivity;
+import com.maxwell.youchat.activity.LoginActivity;
 import com.maxwell.youchat.client.UserWebSocketClient;
 import com.maxwell.youchat.controller.ActivityController;
 
@@ -26,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class WebSocketClientService extends Service {
 
     private static final String WEB_SOCKET_HOST = "ws://8.135.21.168/message";
+//    private static final String WEB_SOCKET_HOST = "ws://10.0.2.2/message";
 
     private static final String TAG = "WebSocketClient";
 
@@ -132,7 +134,6 @@ public class WebSocketClientService extends Service {
                         } catch (Exception e) {
                             break;
                         }
-//                        Log.d(TAG, "Heartbeat Check...");
                         try {
                             Thread.sleep(100);
                         } catch (InterruptedException e) {

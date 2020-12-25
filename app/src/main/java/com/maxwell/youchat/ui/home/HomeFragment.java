@@ -15,6 +15,7 @@ import android.widget.ListView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import com.alibaba.fastjson.JSONObject;
 import com.maxwell.youchat.R;
 import com.maxwell.youchat.YouChatApplication;
 import com.maxwell.youchat.activity.ChatActivity;
@@ -42,20 +43,27 @@ public class HomeFragment extends Fragment {
     private FriendDao friendDao;
     private ChatMessageDao chatMessageDao;
     private Long userId;
-//    private MessageReceiver receiver;
+    private MessageReceiver receiver;
 
+    @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         initDb();
         userId = ((YouChatApplication) getActivity().getApplication()).getUserId();
         root = inflater.inflate(R.layout.fragment_home, container, false);
-//        receiver = new MessageReceiver();
+        receiver = new MessageReceiver();
         initView();
-//        IntentFilter filter = new IntentFilter();
-//        filter.addAction("com.maxwell.youchat.service.WebSocketClientService");
-//        getActivity().registerReceiver(receiver, filter);
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("com.maxwell.youchat.service.WebSocketClientService");
+        getActivity().registerReceiver(receiver, filter);
         return root;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        getActivity().unregisterReceiver(receiver);
     }
 
     /**
@@ -147,15 +155,34 @@ public class HomeFragment extends Fragment {
         return res.toString();
     }
 
-//    private class MessageReceiver extends BroadcastReceiver {
-//        @Override
-//        public void onReceive(Context context, Intent intent) {
-//            Bundle bundle = intent.getExtras();
-//            String message = bundle.getString("message");
-//            if (message.charAt(0) != '{') {
-//                return;
-//            }
-//
-//        }
-//    }
+    private class MessageReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Bundle bundle = intent.getExtras();
+            String message = bundle.getString("message");
+            if (message.charAt(0) != '{') {
+                return;
+            }
+            ChatMessage chatMessage = JSONObject.parseObject(message, ChatMessage.class);
+            itemList = new ArrayList<>();
+            HashMap<String, Object> newItem = new HashMap<>();
+            Long friendId = chatMessage.getSendUserId();
+            List<Friend> friendList = friendDao.queryRaw("WHERE _id = " + friendId);
+            if (friendList.isEmpty()) {
+                Friend friend = new Friend(friendId, "用户" + friendId, 0, null, chatMessage.getId());
+                friendDao.insertOrReplace(friend);
+                friendList.add(friend);
+            }
+            Friend friend = friendList.get(0);
+            newItem.put("username", friend.getUsername());
+            newItem.put("message", chatMessage.getContent());
+            Long createTime = chatMessage.getCreateTime();
+            String date = timeFormat(createTime);
+            newItem.put("time", date);
+            newItem.put("icon", R.drawable.smile_face_24dp);
+            itemList.add(newItem);
+            friendChatAdapter = new FriendChatAdapter(context, itemList);
+            listView.setAdapter(friendChatAdapter);
+        }
+    }
 }
