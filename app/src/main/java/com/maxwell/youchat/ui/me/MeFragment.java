@@ -42,6 +42,7 @@ public class MeFragment extends Fragment {
                     .setMessage("您确定要退出登录吗?")
                     .setPositiveButton("确定", (dialog, which) -> {
                         ((YouChatApplication) getActivity().getApplication()).getClient().close();
+                        ((YouChatApplication) getActivity().getApplication()).setClient(null);
                         Intent stopWebSocketClientService = new Intent(getActivity(), WebSocketClientService.class);
                         getActivity().stopService(stopWebSocketClientService);
                         Intent intent = new Intent(getActivity(), LoginActivity.class);
@@ -57,4 +58,8 @@ public class MeFragment extends Fragment {
         return root;
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+    }
 }

@@ -19,6 +19,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.maxwell.youchat.R;
 import com.maxwell.youchat.YouChatApplication;
 import com.maxwell.youchat.activity.ChatActivity;
+import com.maxwell.youchat.activity.LoginActivity;
 import com.maxwell.youchat.adapter.FriendChatAdapter;
 import com.maxwell.youchat.entity.ChatMessage;
 import com.maxwell.youchat.entity.ChatMessageDao;

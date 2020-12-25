@@ -68,6 +68,7 @@ public class ChatActivity extends BaseActivity {
         receiver = new MessageReceiver();
         initDb();
         initView();
+        listView.setSelection(chatMessageAdapter.getCount() - 1);
         IntentFilter filter = new IntentFilter();
         filter.addAction("com.maxwell.youchat.service.WebSocketClientService");
         this.registerReceiver(receiver, filter);
